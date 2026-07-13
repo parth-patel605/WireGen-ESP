@@ -21,7 +21,7 @@
 
 ---
 
-## 🔮 What is WireGen AI?
+## 🔮 What is WireGen ESP?
 
 **WireGen AI** (ESP-NoCode-Tool) is a cutting-edge desktop application that bridges the gap between hardware engineering and generative AI. Whether you're a seasoned embedded systems developer wanting to prototype rapidly, or a beginner stepping into the world of IoT, WireGen AI translates your plain-text ideas into highly optimized, production-ready `main.cpp` logic for ESP8266 and ESP32 microcontrollers.
 
