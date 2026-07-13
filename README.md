@@ -1,7 +1,7 @@
 <div align="center">
   <img src="" alt="" width="120" />
   
-  # ⚡️ WireGen AI ⚡️
+  # ⚡️ WireGen ESP ⚡️
   
   **The Next-Generation AI-Powered No-Code IoT Builder**
 
