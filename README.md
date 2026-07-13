@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/icon.ico" alt="WireGen AI Logo" width="120" />
+  <img src="" alt="" width="120" />
   
   # ⚡️ WireGen AI ⚡️
   
