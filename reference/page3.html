@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Component Wiring</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#2c2c2c;
+}
+.container{
+  max-width:1200px;
+  margin:20px auto;
+  background:#fff;
+  border-radius:12px;
+  padding:20px;
+}
+h2{
+  text-align:center;
+}
+.actions{
+  display:flex;
+  gap:10px;
+  margin-bottom:15px;
+}
+.actions button{
+  padding:10px 18px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:15px;
+}
+.add{background:#2ecc71;color:#fff;}
+.save{background:#3498db;color:#fff;}
+.next{background:#000;color:#fff;float:right;}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  border:1px solid #ccc;
+  padding:8px;
+}
+th{
+  background:#f2f2f2;
+}
+input{
+  width:100%;
+  padding:6px;
+}
+.note{
+  color:#444;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2>🔌 Component Wiring Configuration</h2>
+
+<div class="actions">
+  <button class="add" onclick="addRow()">➕ Add Custom Wiring</button>
+  <button class="save" onclick="save()">💾 Save Wiring</button>
+  <button class="next" onclick="goNext()">➡ Next</button>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>ESP Pin</th>
+<th>Component Pin</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody id="wiringTable"></tbody>
+</table>
+</div>
+
+<script>
+const selected = JSON.parse(localStorage.getItem("components")) || [];
+const table = document.getElementById("wiringTable");
+
+// ===== STANDARD WIRING DATABASE =====
+const wiringDB = {
+
+ "LED":[
+  ["LED","GPIO 2","+ Anode","220Ω resistor"],
+  ["LED","GND","- Cathode",""]
+ ],
+
+ "RGB LED":[
+  ["RGB LED","GPIO 25","Red","220Ω"],
+  ["RGB LED","GPIO 26","Green","220Ω"],
+  ["RGB LED","GPIO 27","Blue","220Ω"],
+  ["RGB LED","GND","Common Cathode",""]
+ ],
+
+ "Relay Module":[
+  ["Relay","GPIO 26","IN","Control signal"],
+  ["Relay","5V","+ VCC","Relay power"],
+  ["Relay","GND","- GND",""]
+ ],
+
+ "Buzzer":[
+  ["Buzzer","GPIO 14","+",""],
+  ["Buzzer","GND","-",""]
+ ],
+
+ "Push Button":[
+  ["Button","GPIO 13","Signal","Use INPUT_PULLUP"],
+  ["Button","GND","-",""]
+ ],
+
+ "Potentiometer":[
+  ["Pot","GPIO 34","Wiper","Analog input"],
+  ["Pot","3.3V","+ VCC",""],
+  ["Pot","GND","- GND",""]
+ ],
+
+ "LDR":[
+  ["LDR","GPIO 35","Analog","With 10K resistor"],
+  ["LDR","3.3V","+",""],
+  ["LDR","GND","-",""]
+ ],
+
+ "IR Sensor":[
+  ["IR","GPIO 27","OUT",""],
+  ["IR","5V","+ VCC",""],
+  ["IR","GND","-",""]
+ ],
+
+ "PIR Motion Sensor":[
+  ["PIR","GPIO 27","OUT","Digital"],
+  ["PIR","5V","+ VCC",""],
+  ["PIR","GND","-",""]
+ ],
+
+ "Ultrasonic Sensor":[
+  ["HC-SR04","GPIO 5","TRIG",""],
+  ["HC-SR04","GPIO 18","ECHO",""],
+  ["HC-SR04","5V","+ VCC",""],
+  ["HC-SR04","GND","-",""]
+ ],
+
+ "DHT11":[
+  ["DHT11","GPIO 4","DATA","10K pull-up"],
+  ["DHT11","3.3V","+ VCC",""],
+  ["DHT11","GND","-",""]
+ ],
+
+ "DHT22":[
+  ["DHT22","GPIO 4","DATA","10K pull-up"],
+  ["DHT22","3.3V","+ VCC",""],
+  ["DHT22","GND","-",""]
+ ],
+
+ "MQ Gas Sensor":[
+  ["MQ","GPIO 34","AO","Analog"],
+  ["MQ","5V","+ VCC",""],
+  ["MQ","GND","-",""]
+ ],
+
+ "Soil Moisture Sensor":[
+  ["Soil","GPIO 33","AO",""],
+  ["Soil","3.3V","+",""],
+  ["Soil","GND","-",""]
+ ],
+
+ "Rain Sensor":[
+  ["Rain","GPIO 32","AO",""],
+  ["Rain","3.3V","+",""],
+  ["Rain","GND","-",""]
+ ],
+
+ "Sound Sensor":[
+  ["Sound","GPIO 36","AO",""],
+  ["Sound","5V","+",""],
+  ["Sound","GND","-",""]
+ ],
+
+ "OLED Display":[
+  ["OLED","GPIO 21","SDA","I2C"],
+  ["OLED","GPIO 22","SCL","I2C"],
+  ["OLED","3.3V","+",""],
+  ["OLED","GND","-",""]
+ ],
+
+ "LCD 16x2":[
+  ["LCD","GPIO 21","SDA","I2C"],
+  ["LCD","GPIO 22","SCL","I2C"],
+  ["LCD","5V","+",""],
+  ["LCD","GND","-",""]
+ ],
+
+ "Servo Motor":[
+  ["Servo","GPIO 14","Signal","PWM"],
+  ["Servo","5V","+ VCC","External supply recommended"],
+  ["Servo","GND","-",""]
+ ],
+
+ "DC Motor":[
+  ["DC Motor","L298N OUT","Motor","Use driver"],
+ ],
+
+ "Stepper Motor":[
+  ["Stepper","L298N","IN1–IN4","Driver required"],
+ ],
+
+ "Motor Driver (L298N)":[
+  ["L298N","GPIO 25","IN1",""],
+  ["L298N","GPIO 26","IN2",""],
+  ["L298N","GPIO 27","IN3",""],
+  ["L298N","GPIO 14","IN4",""],
+  ["L298N","12V","+ Motor Supply",""],
+  ["L298N","GND","-",""]
+ ],
+
+ "WiFi (Built-in)":[
+  ["ESP32","Internal","WiFi","No wiring needed"]
+ ],
+
+ "Bluetooth":[
+  ["ESP32","Internal","Bluetooth","No wiring needed"]
+ ],
+
+ "GPS Module":[
+  ["GPS","GPIO 16","TX","UART"],
+  ["GPS","GPIO 17","RX","UART"],
+  ["GPS","5V","+",""],
+  ["GPS","GND","-",""]
+ ],
+
+ "GSM Module":[
+  ["GSM","GPIO 16","TX","UART"],
+  ["GSM","GPIO 17","RX","UART"],
+  ["GSM","12V","+","External supply"],
+  ["GSM","GND","-",""]
+ ],
+
+ "RTC Module":[
+  ["RTC","GPIO 21","SDA","I2C"],
+  ["RTC","GPIO 22","SCL","I2C"],
+  ["RTC","3.3V","+",""],
+  ["RTC","GND","-",""]
+ ],
+
+ "SD Card Module":[
+  ["SD","GPIO 23","MOSI","SPI"],
+  ["SD","GPIO 19","MISO","SPI"],
+  ["SD","GPIO 18","SCK","SPI"],
+  ["SD","GPIO 5","CS",""],
+  ["SD","5V","+",""],
+  ["SD","GND","-",""]
+ ],
+
+ "Keypad":[
+  ["Keypad","GPIO 13","ROW","Matrix"],
+  ["Keypad","GPIO 12","COLUMN","Matrix"]
+ ],
+
+ "Touch Sensor":[
+  ["Touch","GPIO 4","Signal","Touch pin"],
+  ["Touch","3.3V","+",""],
+  ["Touch","GND","-",""]
+ ],
+
+ "Fan":[
+  ["Fan","Relay NO","Phase","AC Load"],
+  ["Fan","Relay COM","Live","Isolation required"]
+ ],
+
+ "Water Pump":[
+  ["Pump","Relay NO","Phase","AC/DC load"],
+  ["Pump","Relay COM","Live",""]
+ ],
+
+ "Solenoid Lock":[
+  ["Lock","Relay NO","+","External supply"],
+  ["Lock","Relay COM","-",""]
+ ]
+
+};
+// ===== AUTO GENERATE =====
+selected.forEach(c=>{
+ if(wiringDB[c]){
+  wiringDB[c].forEach(r=>addRow(r));
+ }
+});
+
+// ===== ADD ROW =====
+function addRow(data=["","","","Manual wiring"]){
+ const tr=document.createElement("tr");
+ tr.innerHTML=`
+  <td><input value="${data[0]}"></td>
+  <td><input value="${data[1]}"></td>
+  <td><input value="${data[2]}"></td>
+  <td><input value="${data[3]}"></td>
+ `;
+ table.appendChild(tr);
+}
+
+// ===== SAVE =====
+function save(){
+ const rows=[...table.querySelectorAll("tr")].map(r=>{
+  const i=r.querySelectorAll("input");
+  return {
+   component:i[0].value,
+   esp:i[1].value,
+   pin:i[2].value,
+   note:i[3].value
+  };
+ });
+ localStorage.setItem("wiring",JSON.stringify(rows));
+ alert("Wiring saved");
+}
+
+// ===== NEXT =====
+function goNext(){
+ window.location.href="page4.html";
+}
+</script>
+
+</body>
+</html>

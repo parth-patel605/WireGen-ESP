@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ESP Project Code Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI, Arial;
+  background:#2c2c2c;
+  color:#fff;
+}
+.container{
+  max-width:1200px;
+  margin:20px auto;
+  background:#1a1a1a;
+  border-radius:14px;
+  padding:20px;
+}
+h1{text-align:center;}
+.project{
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:12px;
+}
+.row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+input,select{
+  padding:10px;
+  border-radius:8px;
+  border:none;
+}
+button{
+  padding:12px 24px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:16px;
+}
+.gen{background:#00c853;color:#000;}
+.down{background:#2979ff;color:#fff;}
+.box{
+  background:#111;
+  padding:12px;
+  border-radius:10px;
+  margin-top:14px;
+}
+textarea{
+  width:100%;
+  height:420px;
+  margin-top:12px;
+  background:#000;
+  color:#00ff00;
+  border:none;
+  border-radius:10px;
+  padding:12px;
+  font-family:Consolas;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>ESP Smart Project Code Generator</h1>
+
+<div class="project" id="projectName">Project: —</div>
+
+<div class="row">
+<select id="board">
+  <option>ESP32</option>
+  <option>ESP8266</option>
+</select>
+
+<input id="ssid" placeholder="WiFi Name">
+<input id="pass" placeholder="WiFi Password">
+
+<button class="gen" onclick="generateCode()">Generate Code</button>
+<button class="down" onclick="downloadCode()">Download .ino</button>
+</div>
+
+<div class="box">
+<b>Required Libraries:</b>
+<div id="libs">—</div>
+</div>
+
+<textarea id="code">// Click Generate Code</textarea>
+</div>
+
+<script>
+/* ================= PROJECT CODE DATABASE ================= */
+
+const projectCodes = {
+
+"Smart LED Control System":{
+ libs:["Arduino.h"],
+ code:(ssid,pass)=>`
+#define LED 2
+void setup(){
+ pinMode(LED,OUTPUT);
+}
+void loop(){
+ digitalWrite(LED,HIGH); delay(1000);
+ digitalWrite(LED,LOW); delay(1000);
+}`
+},
+
+"RGB LED Color Controller":{
+ libs:["Arduino.h"],
+ code:(ssid,pass)=>`
+#define R 14
+#define G 12
+#define B 13
+void setup(){
+ pinMode(R,OUTPUT);
+ pinMode(G,OUTPUT);
+ pinMode(B,OUTPUT);
+}
+void loop(){
+ analogWrite(R,255); analogWrite(G,0); analogWrite(B,0); delay(1000);
+ analogWrite(R,0); analogWrite(G,255); analogWrite(B,0); delay(1000);
+ analogWrite(R,0); analogWrite(G,0); analogWrite(B,255); delay(1000);
+}`
+},
+
+"WiFi Based Home Automation":{
+ libs:["WiFi.h"],
+ code:(ssid,pass)=>`
+#include <WiFi.h>
+const char* ssid="${ssid}";
+const char* password="${pass}";
+void setup(){
+ Serial.begin(115200);
+ WiFi.begin(ssid,password);
+ while(WiFi.status()!=WL_CONNECTED){
+  delay(500);
+  Serial.print(".");
+ }
+ Serial.println("WiFi Connected");
+}
+void loop(){}
+`
+},
+
+"Weather Monitoring System":{
+ libs:["DHT.h"],
+ code:(ssid,pass)=>`
+#include <DHT.h>
+#define DHTPIN 4
+#define DHTTYPE DHT22
+DHT dht(DHTPIN,DHTTYPE);
+
+void setup(){
+ Serial.begin(9600);
+ dht.begin();
+}
+void loop(){
+ Serial.print("Temp: ");
+ Serial.print(dht.readTemperature());
+ Serial.println(" °C");
+ Serial.print("Humidity: ");
+ Serial.print(dht.readHumidity());
+ Serial.println(" %");
+ delay(2000);
+}`
+},
+
+"IoT Based Smart Farming System":{
+ libs:["WiFi.h","DHT.h"],
+ code:(ssid,pass)=>`
+#include <WiFi.h>
+#include <DHT.h>
+
+#define DHTPIN 4
+#define DHTTYPE DHT22
+
+DHT dht(DHTPIN,DHTTYPE);
+
+const char* ssid="${ssid}";
+const char* password="${pass}";
+
+void setup(){
+ Serial.begin(115200);
+ WiFi.begin(ssid,password);
+ while(WiFi.status()!=WL_CONNECTED){
+  delay(500);
+ }
+ dht.begin();
+}
+
+void loop(){
+ Serial.print("Temp: ");
+ Serial.println(dht.readTemperature());
+ delay(2000);
+}`
+}
+
+};
+
+/* ================= LOAD SELECTED PROJECT ================= */
+
+let selectedProject="";
+
+window.onload=()=>{
+ selectedProject = localStorage.getItem("selectedProject");
+
+ if(!selectedProject){
+   alert("No project selected from Page 2");
+   return;
+ }
+
+ document.getElementById("projectName").innerText =
+   "Project: " + selectedProject;
+};
+
+/* ================= GENERATE CODE ================= */
+
+function generateCode(){
+
+ if(!projectCodes[selectedProject]){
+   alert("Project code not available");
+   return;
+ }
+
+ const ssid =
+  document.getElementById("ssid").value || "YOUR_WIFI";
+ const pass =
+  document.getElementById("pass").value || "YOUR_PASSWORD";
+
+ const proj = projectCodes[selectedProject];
+
+ document.getElementById("code").value =
+   proj.code(ssid,pass);
+
+ document.getElementById("libs").innerHTML =
+   proj.libs.join("<br>");
+}
+
+/* ================= DOWNLOAD ================= */
+
+function downloadCode(){
+ const text=document.getElementById("code").value;
+ if(!text.trim()){
+   alert("Generate code first");
+   return;
+ }
+ const blob=new Blob([text],{type:"text/plain"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="project.ino";
+ a.click();
+}
+</script>
+
+</body>
+</html>
